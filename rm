@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function MovetoTrash(){
+	local file="$1"
+	local counter=$(printf "$(date +%s | rev | cut -c 1-3 | rev)$(date +%N | rev | cut -c 1-2 | rev)")
+	# counter to ensure the uniqueness every file even in same name on deletion file.
+	local trash_info_path="$HOME/.local/share/Trash/info/$file__$counter.trashinfo"
+	local trash_files_path="$HOME/.local/share/Trash/files/$file__$counter"
+
+	mkdir -p "$(dirname "$trash_info_path")" "$(dirname "$trash_files_path")" # Create the wanted Folders
+	touch "$trash_info_path" # Create the trashinfo File for Restore purpose
+	echo -e "[Trash Info]\nPath=$(pwd)/$file\nDeletionDate=$(date +%FT%T)" >> "$trash_info_path" # Write the Restore informations
+	mv -- "$file" "$trash_files_path" # Finally move the target file or folder to User Local Trash for security Purpose !!.
+	touch "$trash_files_path" # Modify the modification time of the moved files..
+}
+
+read -n1 -p "Are you sure want move the specified files or folder to Trash [Y|n] : " confirmation # Get the Confirmation From User Before starting Process.
+echo;
+
+if [[ ! "$confirmation" =~ ^[Yy] ]]; then
+	echo "Abort this Process.."
+	exit 1
+fi
+for target in "$@"; do
+	if [[ ! $target =~ ^-[rfvid]+$ ]]; then
+		if [[ -a $(pwd)/$target ]]; then
+			if [[ -d "$target" ]]; then
+				echo -ne "Moved folder \e[1;32m$target"
+			else
+				echo -ne "Moved file \e[1;32m$target"
+			fi
+
+			echo -e " \e[0mto Trash, 30 Days are left."
+			MovetoTrash $target
+		else 
+			echo -e "\e[1;31;5m$target\e[0m file or folder not exists"
+		fi
+	else
+		echo "If you want to remove the file or folder that name is start with '-' eg. -foo.bar please use the /bin/rm cmd."
+	fi
+done
