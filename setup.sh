@@ -8,7 +8,7 @@ mkdir -p $HOME/.local/bin
 
 # Add the user bin folder to the PATH variable
 if [[ ! ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
-	export PATH = $PATH:$HOME/.local/bin
+	export PATH = $HOME/.local/bin:$PATH
 fi
 
 # rm: Command Guard Installation
@@ -29,10 +29,12 @@ read -rn1 -p "Do you want to install autotrash script? [Y/n] " confirmation
 echo 
 if [[ "$confirmation" =~ ^[Yy] ]]; then
 	/usr/bin/cp ./auto_trash_clean.sh $HOME/.local/bin
+	sudo chmod +x $HOME/.local/bin/auto_trash_clean.sh
+
 	# Get time to execute script daily
-	read -r -p "Enter Minute; eg: 0-59" minute_
-	read -r -p "Enter Hour in 24-hour format; eg: 0-23" hour_
-	CRON_JOB = "$minute_ $hour_ * * * $HOME/.local/bin/auto_trash_clean.sh >> $HOME/.local/bin/auto_trash_clean_cronerror.log 2>&1"
+	read -r -p "Enter Minute; eg: 0-59: " minute_
+	read -r -p "Enter Hour in 24-hour format; eg: 0-23: " hour_
+	CRON_JOB="$minute_ $hour_ * * * $HOME/.local/bin/auto_trash_clean.sh >> $HOME/.local/bin/auto_trash_clean_cronerror.log 2>&1"
 
 	# Check if already exists
 	crontab -l 2>/dev/null | grep -F "$CRON_JOB" >/dev/null
@@ -63,4 +65,33 @@ if [[ "$confirmation" =~ ^[Yy] ]]; then
 	else
 		echo "Sorry! error occured ERROR: $?"
 	fi
+fi
+
+
+# Customized Keys
+read -rn1 -p "Do you want to install customization for Up+PgUp keyboard? [Y/n] " confirmation
+echo
+if [[ "$confirmation" =~ ^[Yy] ]]; then
+	git clone https://github.com/rvaiya/keyd.git
+	cd keyd || exit
+	make && sudo make install
+
+	sudo tee /etc/keyd/default.conf > /dev/null <<EOF
+[ids]
+*
+
+[main]
+leftmeta+leftshift+f23 = layer(nav)
+
+[nav]
+left = C-pageup
+right = C-pagedown
+up = C-pageup
+down = C-pagedown
+EOF
+
+	sudo systemctl enable keyd
+	sudo systemctl restart keyd
+
+	echo "Keyd customization installed successfully."
 fi
