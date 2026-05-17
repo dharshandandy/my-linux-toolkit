@@ -8,7 +8,7 @@ mkdir -p $HOME/.local/bin
 
 # Add the user bin folder to the PATH variable
 if [[ ! ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
-	export PATH = $PATH:$HOME/.local/bin
+	export PATH = $HOME/.local/bin:$PATH
 fi
 
 # rm: Command Guard Installation
@@ -63,4 +63,33 @@ if [[ "$confirmation" =~ ^[Yy] ]]; then
 	else
 		echo "Sorry! error occured ERROR: $?"
 	fi
+fi
+
+
+# Customized Keys
+read -rn1 -p "Do you want to install customization for Up+PgUp keyboard? [Y/n] " confirmation
+echo
+if [[ "$confirmation" =~ ^[Yy] ]]; then
+	git clone https://github.com/rvaiya/keyd.git
+	cd keyd || exit
+	make && sudo make install
+
+	sudo tee /etc/keyd/default.conf > /dev/null <<EOF
+[ids]
+*
+
+[main]
+f23 = layer(nav)
+
+[nav]
+left = C-S-pageup
+right = C-S-pagedown
+up = C-S-pageup
+down = C-S-pagedown
+EOF
+
+	sudo systemctl enable keyd
+	sudo systemctl restart keyd
+
+	echo "Keyd customization installed successfully."
 fi
