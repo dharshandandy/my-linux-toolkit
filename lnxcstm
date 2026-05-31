@@ -1,0 +1,133 @@
+#!/usr/bin/python3
+
+import argparse
+import yaml
+import sys
+import subprocess
+import os
+
+def authenticate_linux_user():
+    try:
+        subprocess.run(
+            ["sudo", "-vk"],   # prompt for password
+            check=True
+        )
+
+        return True
+
+    except KeyboardInterrupt:
+        print("\nAuthentication cancelled.")
+        sys.exit(130)
+
+    except subprocess.CalledProcessError:
+        print("Authentication failed")
+        sys.exit(1)
+
+CONFIG_FILE = os.path.expanduser(
+    "~/.local/bin/.config/config.yaml"
+)
+
+def load_config():
+    with open(CONFIG_FILE, "r") as f:
+        return yaml.safe_load(f)
+
+
+def save_config(data):
+    with open(CONFIG_FILE, "w") as f:
+        yaml.dump(data, f, default_flow_style=False)
+
+
+def to_bool(value):
+    if value.lower() in ["y", "yes", "1", "true"]:
+        return True
+    elif value.lower() in ["n", "no", "0", "false"]:
+        return False
+
+    print(f"Invalid value: '{value}'")
+    print("Expected: [y | yes | n | no | 1 | 0]")
+    sys.exit(2)
+
+parser = argparse.ArgumentParser(add_help=False)
+
+parser.add_argument("config_name", nargs="?")
+
+parser.add_argument("-h", "--help", action="store_true")
+parser.add_argument("-g", "--get", action="store_true")
+parser.add_argument("-s", "--set", action="store_true")
+
+parser.add_argument("-e", "--enable", nargs="?", const=True)
+parser.add_argument("-a", "--authentication", nargs="?", const=True)
+parser.add_argument("-c", "--confirmation", nargs="?", const=True)
+
+args = parser.parse_args()
+
+cfg = load_config()
+
+#
+# HELP
+#
+if args.help:
+    parser.print_help()
+
+#
+# No config specified
+#
+if not args.config_name:
+    print("Available configs:")
+    for name in cfg.keys():
+        print(f"  {name}")
+    sys.exit(0)
+
+#
+# Config not found
+#
+if args.config_name not in cfg:
+    print(f"Unknown config: {args.config_name}")
+    sys.exit(1)
+
+#
+# HELP
+#
+if args.help:
+    parser.print_help()
+
+#
+# GET
+#
+if args.get:
+    
+    if args.enable is not None:
+        print(cfg[args.config_name]["enable"])
+        sys.exit(0)
+
+    if args.authentication is not None:
+        print(cfg[args.config_name]["authentication"])
+        sys.exit(0)
+
+    if args.confirmation is not None:
+        print(cfg[args.config_name]["confirmation"])
+        sys.exit(0)
+
+#
+# SET
+#
+if args.set:
+
+    if args.enable is not None:
+        cfg[args.config_name]["enable"] = to_bool(args.enable)
+
+    if args.authentication is not None:
+        cfg[args.config_name]["authentication"] = to_bool(
+            args.authentication)
+
+    if args.confirmation is not None:
+        cfg[args.config_name]["confirmation"] = to_bool(
+            args.confirmation)
+
+    authenticate_linux_user()
+    save_config(cfg)
+
+    print(f"{args.config_name} updated")
+    sys.exit(0)
+
+parser.print_help()
