@@ -1,0 +1,10 @@
+auto_trash:
+  enable: true
+git:
+  authentication: false
+  confirmation: true
+  enable: true
+rm:
+  authentication: false
+  confirmation: true
+  enable: true

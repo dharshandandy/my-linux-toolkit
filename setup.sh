@@ -11,6 +11,9 @@ if [[ ! ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
 	export PATH = $HOME/.local/bin:$PATH
 fi
 
+# Add linux_custom settings
+/usr/bin/cp -r lnxcstm .config/ $HOME/.local/bin
+
 # rm: Command Guard Installation
 read -rn1 -p "Do you want to install rm command guard? [Y/n] " confirmation
 echo
@@ -86,8 +89,8 @@ leftmeta+leftshift+f23 = layer(nav)
 [nav]
 left = C-pageup
 right = C-pagedown
-up = C-pageup
-down = C-pagedown
+up = pageup
+down = pagedown
 EOF
 
 	sudo systemctl enable keyd
