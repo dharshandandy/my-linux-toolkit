@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Check this cutomization is enabled.
+enabled=$(lnxcstm rm -g -e)
+if [[ "$enabled" =~ "False" ]]; then
+	/usr/bin/rm $@
+	exit
+fi
+
 function MovetoTrash(){
 	local file="$1"
 	local counter=$(printf "$(date +%s | rev | cut -c 1-3 | rev)$(date +%N | rev | cut -c 1-2 | rev)")
@@ -14,13 +21,24 @@ function MovetoTrash(){
 	touch "$trash_files_path" # Modify the modification time of the moved files..
 }
 
-read -n1 -p "Are you sure want move the specified files or folder to Trash [Y|n] : " confirmation # Get the Confirmation From User Before starting Process.
-echo;
-
-if [[ ! "$confirmation" =~ ^[Yy] ]]; then
-	echo "Abort this Process.."
-	exit 1
+# Check confirmation is enabled.
+confirmation_enable=$(lnxcstm rm -g -c)
+if [[ "$confirmation_enable" =~ "True" ]]; then
+	read -n1 -p "Are you sure want move the specified files or folder to Trash [Y|n] : " confirmation # Get the Confirmation From User Before starting Process.
+	echo;
+	if [[ ! "$confirmation" =~ ^[Yy] ]]; then
+		echo "Abort this Process.."
+		exit 1
+	fi
 fi
+
+# Authenticate User
+authentication_enable=$(lnxcstm rm -g -a)
+if [[ "$authentication_enable" =~ "True" ]]; then
+	echo "Authentication required to continue.."
+	sudo -vk || exit 1
+fi
+
 for target in "$@"; do
 	if [[ ! $target =~ ^-[rfvid]+$ ]]; then
 		if [[ -a $(pwd)/$target ]]; then

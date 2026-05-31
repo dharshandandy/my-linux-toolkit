@@ -2,6 +2,12 @@
 
 # This script will remove permentently the files|folders which are moved to trash 30 days ago. 
 
+# Check this cutomization is enabled.
+enabled=$(lnxcstm auto_trash -g -e)
+if [[ "$enabled" =~ "False" ]]; then
+	exit 1
+fi
+
 TRASH_DIR="$HOME/.local/share/Trash"
 INFO_DIR="$TRASH_DIR/info"
 FILES_DIR="$TRASH_DIR/files"
